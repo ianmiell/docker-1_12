@@ -85,6 +85,75 @@ class docker_1_12(ShutItModule):
 		shutit.login(user='root',command='sudo su - root')
 		shutit.send('curl -sSL -O https://experimental.docker.com/builds/Linux/x86_64/docker-latest.tgz && tar -zxvf docker-latest.tgz && cd docker')
 		shutit.send('mv * /usr/bin')
+		shutit.send('cd')
+		shutit.send('dockerd &')
+
+		# Log into docker
+		shutit.multisend('docker login',{'sername':shutit.cfg[self.module_id]['docker_username'],'assword':shutit.cfg[self.module_id]['docker_password']})
+
+#DOCKERFILE 
+#HEALTHCHECK --interval=5m --grace=20s --timeout=3s --exit-on-unhealthy CMD curl -f http://localhost/
+		shutit.send('mkdir hello && cd hello')
+		shutit.send_file('hello.py','''#!/usr/bin/env python
+import os
+import socket
+import SimpleHTTPServer
+import SocketServer
+try:
+    PORT = int(os.environ.get('PORT', '80'))
+except Exception:
+    PORT = 80
+if __name__ == "__main__":
+    Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+    httpd = SocketServer.TCPServer(("0.0.0.0", PORT), Handler)
+    with open('index.html', 'w') as index:
+        index.write(u"""
+           <h1 style="text-align: center">Hello World!!!</h1>
+           <h2 style="text-align: center">My IP address is %s</h2>
+           <h3 style="text-align: center">Running on port %s</h3>
+           """ % (
+             socket.gethostbyname(socket.gethostname()), PORT
+         ))
+
+    print "Serving at 0.0.0.0:%s" % PORT
+    httpd.serve_forever()''')
+		shutit.send_file('Dockerfile','''
+FROM alpine:3.2
+RUN apk add --update python && rm -rf /var/cache/apk/*
+RUN mkdir /www
+ADD hello.py /www/
+RUN chmod +x /www/hello.py
+WORKDIR /www
+HEALTHCHECK --interval=10s --timeout=3s --retries=1 CMD curl localhost:8080
+CMD ["python", "hello.py"]''')
+		shutit.send('docker build -t imiell/hello .')
+		shutit.send('docker push imiell/hello')
+
+		shutit.send('docker version',note='Confirm version of docker as 1.12')
+#Usage:	docker swarm COMMAND
+#  join        Join a Swarm as a node and/or manager
+#  update      Update the Swarm
+#  leave       Leave a Swarm
+		shutit.send('docker swarm init',note='Initialise a swarm')
+		shutit.send('docker swarm inspect',note='Inspect the swarm')
+
+#Usage:	docker node COMMAND
+#  accept      Accept a node in the swarm
+#  demote      Demote a node from manager in the swarm
+#  inspect     Inspect a node in the swarm
+#  promote     Promote a node to a manager in the swarm
+#  rm          Remove a node from the swarm
+#  tasks       List tasks running on a node
+#  update      Update a node
+		shutit.send('docker node ls',note='List the nodes in the swarm')
+
+#Usage:	docker service COMMAND
+#  tasks       List the tasks of a service
+#  rm          Remove a service
+#  scale       Scale one or multiple services
+#  update      Update a service
+		shutit.send('docker service create imiell/hello',note='Create a simple echo service')
+		shutit.send('docker service ls',note='List the services in the swarm')
 		shutit.pause_point('')
 		shutit.logout()
 		return True
@@ -97,6 +166,8 @@ class docker_1_12(ShutItModule):
 		# shutit.get_config(self.module_id, 'myconfig', default='a value')
 		#                                      and reference in your code with:
 		# shutit.cfg[self.module_id]['myconfig']
+		shutit.get_config(self.module_id, 'docker_username',secret=True)
+		shutit.get_config(self.module_id, 'docker_password',secret=True)
 		return True
 
 	def test(self, shutit):
