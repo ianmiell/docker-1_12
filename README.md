@@ -5,8 +5,8 @@ An automated, annotated, interactive demo of Docker 1.12's new features using [S
 
 ```
 pip install shutit
-git clone --recursive https://github.com/ianmiell/shutit-docker-1_12
-cd shutit-docker-1_12
+git clone --recursive https://github.com/ianmiell/docker-1_12
+cd docker-1_12
 ./run.sh
 ```
 
