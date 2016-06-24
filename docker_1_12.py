@@ -71,19 +71,20 @@ CMD ["python", "hello.py"]''')
 		#  update      Update the Swarm
 		#  leave       Leave a Swarm
 		shutit.send('docker swarm init',note='Initialise a swarm')
-		shutit.send('docker swarm inspect',note='Inspect the swarm')
+		shutit.pause_point('')
+		#shutit.send('docker swarm inspect',note='Inspect the swarm')
 
 		#Usage:	docker node COMMAND
 		shutit.send('docker node ls',note='List the nodes in the swarm')
-		shutit.send('docker node inspect ubuntu-xenial',note='Inspect the node')
+		#shutit.send('docker node inspect ubuntu-xenial',note='Inspect the node')
 
 		#Usage:	docker service COMMAND
 		shutit.send('docker service create imiell/hello',note='Create a simple hello service')
 		shutit.send('docker service ls',note='List the services in the swarm')
 		service_id = shutit.send_and_get_output("""docker service ls | tail -1 | awk '{print $1}'""")
-		shutit.send("""docker service inspect """ + service_id,note='Inspect the service')
+		#shutit.send("""docker service inspect """ + service_id,note='Inspect the service')
 		shutit.send("""docker service scale """ + service_id + """=2""",note='Scale the service to two containers')
-		shutit.send("""docker service inspect """ + service_id,note='Inspect the service, note it now has 2 replicas')
+		#shutit.send("""docker service inspect """ + service_id,note='Inspect the service, note it now has 2 replicas')
 		shutit.send('docker node tasks self',note='List the tasks running on this node.')
 		shutit.send('docker node update --availability=pause ubuntu-xenial',note='')
 		shutit.send('docker node tasks self',note='')
